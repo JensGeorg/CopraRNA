@@ -72,7 +72,7 @@ my $genomePath = "."; # where to look for and store genome files
 my $intarnaParamFile = $PATH_COPRA . "coprarna_aux/intarna_options.cfg";
 my $CopraRNA_expert_options = $PATH_COPRA . "coprarna_aux/coprarna_options.cfg";
 my $hybrid_threshold = 0.6; # interactions are removed from the CopraRNA calculations if a continuous hybrid covers >= "hybrid_threshold" of the sRNA
-
+my $refseq_check = 1; #check if Refseq headrs are in reference file
 
 
 GetOptions (
@@ -91,7 +91,8 @@ GetOptions (
     'genomePath:s'		=> \$genomePath,
     'intarnaOptions:s'		=> \$intarnaParamFile,
     'CopraRNA_expert_options:s'		=> \$CopraRNA_expert_options,
-	'hybrid_threshold:f'		=> \$hybrid_threshold
+	'hybrid_threshold:f'		=> \$hybrid_threshold,
+ 	'refseq_check'			=> \$refseq_check
 );
 
 if ($help) {
@@ -182,16 +183,17 @@ system "grep '-' $sRNAs_fasta > find_gaps.txt";
 if (-s "find_gaps.txt") { die("\nError: Gaps are present in sRNA sequences. Please delete them from the file and restart.\n\n"); }
 
 # check for correct RefSeq formatted headers and their presence in the availibility table
-my $headerIDs = `grep ">" $sRNAs_fasta | sed 's/>//g' | tr '\n' ';'`;
-chop $headerIDs;
-my @splitHeaderIDs = split(/;/,$headerIDs);
-foreach(@splitHeaderIDs) {
-    die("\nError: $_ does not match correct RefSeq ID format (NZ_* or NC_XXXXXX where * stands for any character and X stands for a digit between 0 and 9).\n\n") unless ($_ =~ m/NC_\d{6}|NZ_.*/);
-    $_ =~ s/^\s+|\s+$//g; 
-    my $availabilityCheck = `grep '$_' $PATH_COPRA/coprarna_aux/kegg2refseqnew.csv`;
-    die("\nError: '$_' is not present in the availability list and is thus not compatible with CopraRNA.\n\n") unless (length $availabilityCheck); 
+if ($refseq_check) {
+	my $headerIDs = `grep ">" $sRNAs_fasta | sed 's/>//g' | tr '\n' ';'`;
+	chop $headerIDs;
+	my @splitHeaderIDs = split(/;/,$headerIDs);
+	foreach(@splitHeaderIDs) {
+	    die("\nError: $_ does not match correct RefSeq ID format (NZ_* or NC_XXXXXX where * stands for any character and X stands for a digit between 0 and 9).\n\n") unless ($_ =~ m/NC_\d{6}|NZ_.*/);
+	    $_ =~ s/^\s+|\s+$//g; 
+	    my $availabilityCheck = `grep '$_' $PATH_COPRA/coprarna_aux/kegg2refseqnew.csv`;
+	    die("\nError: '$_' is not present in the availability list and is thus not compatible with CopraRNA.\n\n") unless (length $availabilityCheck); 
+	}
 }
-
 # check that maxbpdist ist smaller or equal to windowsize
 
 #die("\nError: The maximal basepair distance ($maxbpdist) is larger than the given window size ($winsize) but must be <= to the windows size. Please change the parameters accordingly.\n\n") if ($maxbpdist > $winsize);
