@@ -92,7 +92,7 @@ GetOptions (
     'intarnaOptions:s'		=> \$intarnaParamFile,
     'CopraRNA_expert_options:s'		=> \$CopraRNA_expert_options,
 	'hybrid_threshold:f'		=> \$hybrid_threshold,
- 	'refseq_check'			=> \$refseq_check
+ 	'refseq_check:i'			=> \$refseq_check
 );
 
 if ($help) {
